@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Material de apoio com os fundamentos de JavaScript em exemplos executáveis no navegador.">
+    <title>Introdução ao JavaScript</title>
+
+    <!-- Tema de cores para o destaque de sintaxe (opcional: a página funciona sem ele) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="cabecalho">
+        <div class="cabecalho__conteudo">
+            <div class="logo" aria-hidden="true">JS</div>
+
+            <div>
+                <p class="cabecalho__sobretitulo">Material de apoio</p>
+                <h1 class="cabecalho__titulo">Introdução ao JavaScript</h1>
+                <p class="cabecalho__descricao">
+                    Os fundamentos da linguagem em exemplos curtos e executáveis. Os tópicos seguem uma
+                    progressão: cada um usa o que foi visto nos anteriores e termina com uma
+                    <strong>aplicação prática</strong>.
+                </p>
+
+                <ul class="cabecalho__dicas">
+                    <li>Clique em <strong>▶ Executar</strong> para rodar um exemplo e ver a saída abaixo do código.</li>
+                    <li>Abra o console do navegador (<kbd>F12</kbd>) para ver as mesmas saídas e chamar as funções
+                        diretamente, como <code>exemploFor()</code>.</li>
+                    <li>Altere o <code>script.js</code>, salve e recarregue a página (<kbd>F5</kbd>) para testar suas
+                        mudanças.</li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="layout">
+        <nav class="sumario" aria-label="Sumário">
+            <h2 class="sumario__titulo">Sumário</h2>
+            <ol class="sumario__lista" id="lista-do-sumario"></ol>
+        </nav>
+
+        <main class="conteudo" id="conteudo">
+            <noscript>
+                <p>Esta página precisa do JavaScript ativado no navegador para exibir os exemplos.</p>
+            </noscript>
+        </main>
+    </div>
+
+    <footer class="rodape">
+        <p>Explicações detalhadas de cada tópico: <code>readme.md</code> · Código dos exemplos: <code>script.js</code></p>
+    </footer>
+
+    <!-- Biblioteca de destaque de sintaxe (opcional: sem internet, os códigos aparecem sem cores) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Exemplos da aula -->
+    <script src="script.js"></script>
+
+    <!-- Montagem da página a partir dos exemplos -->
+    <script src="pagina.js"></script>
+</body>
+
+</html>
