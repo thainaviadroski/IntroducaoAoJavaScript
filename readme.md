@@ -8,7 +8,7 @@ Material de apoio com os fundamentos da linguagem JavaScript Cada conceito é ex
 - [Como executar os exemplos](#como-executar-os-exemplos)
 - [Como os exemplos estão organizados](#como-os-exemplos-estão-organizados)
 - [Convenções de nomenclatura](#convenções-de-nomenclatura)
-- Tópicos
+- Parte 1 — Fundamentos da linguagem
   1. [Declaração de variáveis](#1-declaração-de-variáveis)
   2. [Tipos primitivos](#2-tipos-primitivos)
   3. [Manipulação de strings](#3-manipulação-de-strings)
@@ -20,6 +20,11 @@ Material de apoio com os fundamentos da linguagem JavaScript Cada conceito é ex
   9. [Funções e arrow functions](#9-funções-e-arrow-functions)
   10. [Objetos](#10-objetos)
   11. [Arrays](#11-arrays)
+- [Parte 2 — JavaScript no navegador](#parte-2--javascript-no-navegador)
+  1. [DOM](#12-dom)
+  2. [Seletores de elementos](#13-seletores-de-elementos)
+  3. [Eventos](#14-eventos)
+  - [Estudo de caso: o `pagina.js`](#estudo-de-caso-o-paginajs)
 - [Referências](#referências)
 
 ---
@@ -36,7 +41,7 @@ IntroducaoAoJavaScript/
 ```
 
 - **`script.js`** é o arquivo principal de estudo. Ele contém os exemplos, separados por tópico e escritos como funções independentes. No final dele há a lista `topicos`, que organiza os exemplos e é usada para montar a página.
-- **`pagina.js`** apenas cria a interface: lê a lista `topicos`, mostra o código de cada exemplo e exibe a saída quando você clica em **Executar**. Ele usa recursos que vão além do básico (manipulação do DOM) e **não faz parte do conteúdo da aula**.
+- **`pagina.js`** apenas cria a interface: lê a lista `topicos`, mostra o código de cada exemplo e exibe a saída quando você clica em **Executar**. Ele usa manipulação do DOM, assunto da [Parte 2](#parte-2--javascript-no-navegador), e **não faz parte do conteúdo da Parte 1**. Depois de estudar a Parte 2, ele pode ser lido como um [estudo de caso](#estudo-de-caso-o-paginajs).
 
 > O código exibido na página é lido diretamente das funções do `script.js`. Por isso, o que você vê na página é exatamente o que está no arquivo.
 
@@ -1532,8 +1537,897 @@ for (const [disciplina, nota] of Object.entries(notasPorDisciplina)) {
 
 ---
 
+## Parte 2 — JavaScript no navegador
+
+Na Parte 1, os exemplos se comunicavam apenas pelo console. Nesta parte, o JavaScript passa a **interagir com a página**: ler e alterar o seu conteúdo, encontrar elementos e reagir às ações do usuário, como cliques e teclas pressionadas.
+
+Os tópicos continuam a numeração da Parte 1 e usam tudo o que foi visto nela, principalmente funções e callbacks ([tópico 9](#9-funções-e-arrow-functions)), objetos ([tópico 10](#10-objetos)) e arrays ([tópico 11](#11-arrays)).
+
+| Tópico                     | Pergunta que responde                                      |
+| -------------------------- | ---------------------------------------------------------- |
+| 12. DOM                    | como o JavaScript enxerga e altera a página?               |
+| 13. Seletores de elementos | como encontrar um elemento que já existe no HTML?          |
+| 14. Eventos                | como executar um código quando o usuário faz alguma coisa? |
+
+> **Sobre a ordem dos tópicos:** os seletores (tópico 13) vêm antes dos eventos (tópico 14) porque, para reagir ao clique em um botão, primeiro é preciso encontrar esse botão na página.
+
+### Como testar os trechos desta parte
+
+Os trechos desta parte não estão no `script.js`. Como eles leem e alteram a página, a forma mais simples de testá-los é pelo **console do navegador**, com o `index.html` aberto (veja [Pelo console do navegador](#2-pelo-console-do-navegador)). O console tem acesso à página aberta, então dá para experimentar com os elementos do próprio material. Cada tópico termina com sugestões em **Experimente no console**.
+
+> Toda alteração feita pelo console é **temporária**: ela muda apenas a página aberta, e não o arquivo `index.html`. Para desfazer tudo, basta recarregar a página (`F5`).
+
+Os trechos que dependem de um HTML próprio, como os formulários do [tópico 14](#14-eventos), podem ser testados em um arquivo `.html` novo, criado a partir deste modelo:
+
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Testando o DOM</title>
+  </head>
+  <body>
+    <!-- cole aqui o HTML do exemplo -->
+
+    <script>
+      // cole aqui o código JavaScript do exemplo
+    </script>
+  </body>
+</html>
+```
+
+---
+
+## 12. DOM
+
+Quando o navegador abre um arquivo HTML, ele lê o código e monta, na memória, uma representação da página formada por **objetos**. Essa representação é o **DOM** (_Document Object Model_, ou Modelo de Objetos do Documento).
+
+O JavaScript não altera o arquivo HTML: ele altera o DOM. E toda alteração no DOM aparece **imediatamente** na tela.
+
+```
+ arquivo .html ──► navegador ──► DOM ──► página na tela
+                                  ▲
+                                  └── o JavaScript lê e altera o DOM
+```
+
+### A árvore do DOM
+
+O DOM organiza a página como uma **árvore**. Cada tag do HTML vira um **nó** (_node_), e as tags que estão dentro de outra são seus **filhos**:
+
+```html
+<html>
+  <head>
+    <title>Turma A</title>
+  </head>
+  <body>
+    <h1>Notas da turma</h1>
+    <ul>
+      <li>Ana: 8.5</li>
+      <li>Bruno: 6.0</li>
+    </ul>
+  </body>
+</html>
+```
+
+```
+document
+└── html
+    ├── head
+    │   └── title
+    │       └── "Turma A"
+    └── body
+        ├── h1
+        │   └── "Notas da turma"
+        └── ul
+            ├── li
+            │   └── "Ana: 8.5"
+            └── li
+                └── "Bruno: 6.0"
+```
+
+Os termos usados para descrever a árvore lembram os de uma árvore genealógica:
+
+| Termo        | Significado                                         | No exemplo                                    |
+| ------------ | --------------------------------------------------- | --------------------------------------------- |
+| raiz         | o nó do topo, de onde a árvore parte                | `document`                                    |
+| pai          | o elemento que contém outro diretamente             | `ul` é pai dos dois `li`                      |
+| filho        | o elemento que está diretamente dentro de outro     | `h1` e `ul` são filhos de `body`              |
+| irmãos       | elementos com o mesmo pai                           | os dois `li`                                  |
+| ancestrais   | o pai, o pai do pai, e assim por diante             | `ul`, `body` e `html` são ancestrais dos `li` |
+| descendentes | os filhos, os filhos dos filhos, e assim por diante | todos os elementos são descendentes de `html` |
+
+Há dois tipos principais de nós:
+
+- **Nós de elemento:** as tags (`body`, `h1`, `li`...). É com eles que mais trabalhamos.
+- **Nós de texto:** o texto dentro das tags (`"Ana: 8.5"`). Os espaços e as quebras de linha entre as tags também viram nós de texto.
+
+### O objeto `document`
+
+O **`document`** é o ponto de entrada do DOM: um objeto disponível em qualquer script da página, que representa o documento inteiro. A partir dele, é possível chegar a qualquer elemento.
+
+| Propriedade                | O que representa                            |
+| -------------------------- | ------------------------------------------- |
+| `document.documentElement` | o elemento `<html>`                         |
+| `document.head`            | o elemento `<head>`                         |
+| `document.body`            | o elemento `<body>`                         |
+| `document.title`           | o título da página (o texto exibido na aba) |
+
+Cada elemento também é um **objeto**, com propriedades e métodos ([tópico 10](#10-objetos)). Para ver todas as propriedades de um elemento no console, use `console.dir` em vez de `console.log`:
+
+```js
+console.log(document.body); // mostra o elemento no formato de HTML
+console.dir(document.body); // mostra o elemento como objeto, com suas propriedades
+```
+
+> O `document` é uma propriedade do objeto **`window`**, que representa a janela (ou a aba) do navegador. Por isso, `document` e `window.document` são a mesma coisa.
+
+### Onde colocar a tag `<script>`
+
+O navegador lê o HTML **de cima para baixo**. Se um script for executado antes de um elemento ser lido, esse elemento ainda não existe no DOM, e o JavaScript não consegue encontrá-lo.
+
+Há duas formas simples de garantir que o HTML já foi lido quando o script for executado:
+
+1. **Colocar o `<script>` no final do `<body>`**, como no `index.html` deste projeto:
+
+   ```html
+   <body>
+     <h1>Notas da turma</h1>
+
+     <script src="script.js"></script>
+   </body>
+   ```
+
+2. **Usar o atributo `defer`** em um `<script>` dentro do `<head>`. O script é baixado enquanto o HTML é lido, mas só é executado depois que a leitura termina:
+
+   ```html
+   <head>
+     <script src="script.js" defer></script>
+   </head>
+   ```
+
+Uma terceira forma, com o evento `DOMContentLoaded`, é apresentada no [tópico 14](#14-eventos).
+
+### Navegando pela árvore
+
+A partir de um elemento, é possível chegar aos elementos próximos dele:
+
+| Propriedade              | Retorna                             |
+| ------------------------ | ----------------------------------- |
+| `parentElement`          | o elemento pai                      |
+| `children`               | uma coleção com os elementos filhos |
+| `firstElementChild`      | o primeiro filho                    |
+| `lastElementChild`       | o último filho                      |
+| `nextElementSibling`     | o próximo irmão                     |
+| `previousElementSibling` | o irmão anterior                    |
+
+Usando o HTML da árvore acima:
+
+```js
+const titulo = document.body.firstElementChild; // o <h1>
+const lista = titulo.nextElementSibling; // o <ul>
+
+lista.children.length; // 2
+lista.children[0]; // o primeiro <li>
+lista.lastElementChild.parentElement; // o próprio <ul>
+lista.lastElementChild.nextElementSibling; // null: o último <li> não tem próximo irmão
+```
+
+Quando o elemento procurado não existe, o resultado é `null`, como na última linha.
+
+> Existem também as propriedades `childNodes`, `firstChild` e `nextSibling`, sem a palavra `Element`. Elas incluem os nós de texto (inclusive os espaços entre as tags) e, por isso, costumam trazer resultados inesperados. Prefira as versões com `Element`.
+
+> Navegar pela árvore depende da posição exata de cada elemento no HTML: se a estrutura mudar, o código para de funcionar. Na maioria dos casos, é melhor **buscar o elemento diretamente**, com os seletores do [tópico 13](#13-seletores-de-elementos).
+
+### Lendo e alterando o conteúdo
+
+| Propriedade   | O que faz                                        |
+| ------------- | ------------------------------------------------ |
+| `textContent` | lê ou substitui o **texto** do elemento          |
+| `innerHTML`   | lê ou substitui o **HTML** de dentro do elemento |
+
+```js
+titulo.textContent; // "Notas da turma"
+titulo.textContent = "Notas da Turma A"; // a página muda na hora
+
+titulo.textContent = "<em>Turma A</em>"; // as tags aparecem como texto
+titulo.innerHTML = "<em>Turma A</em>"; // as tags são interpretadas: "Turma A" em itálico
+```
+
+> **Atenção:** nunca use `innerHTML` com textos digitados pelo usuário. Se o texto tiver tags, elas serão interpretadas, inclusive as que executam código malicioso. Esse tipo de ataque se chama _XSS_ (_Cross-Site Scripting_). Para exibir textos, use sempre `textContent`.
+
+Existe também o `innerText`, parecido com o `textContent`, mas que considera a aparência da página (por exemplo, ignora o texto de elementos escondidos). Na maioria dos casos, o `textContent` é suficiente.
+
+### Atributos
+
+Os atributos do HTML (`id`, `href`, `src`, `type`...) podem ser lidos e alterados de duas formas:
+
+```js
+// 1. Com os métodos de atributos
+link.getAttribute("href"); // lê o valor
+link.setAttribute("href", "https://developer.mozilla.org"); // altera ou cria
+link.hasAttribute("target"); // verifica se existe: true ou false
+link.removeAttribute("target"); // remove
+
+// 2. Como propriedades do elemento (a forma mais comum)
+link.href = "https://developer.mozilla.org";
+imagem.src = "foto-da-turma.jpg";
+botao.disabled = true; // desativa o botão
+paragrafo.hidden = true; // esconde o elemento
+campo.value; // o texto digitado em um campo de formulário
+```
+
+Atributos personalizados começam com `data-` e são acessados pela propriedade **`dataset`**. Nomes com hífen viram camelCase: `data-ano-de-ingresso` é lido como `dataset.anoDeIngresso`.
+
+```html
+<li data-matricula="2025001" data-ano-de-ingresso="2025">Ana</li>
+```
+
+```js
+item.dataset.matricula; // "2025001" (sempre uma string)
+item.dataset.anoDeIngresso; // "2025"
+item.dataset.curso = "Direito"; // cria o atributo data-curso
+```
+
+### Classes
+
+A propriedade **`classList`** manipula as classes CSS de um elemento, uma de cada vez:
+
+| Método                            | O que faz                                              |
+| --------------------------------- | ------------------------------------------------------ |
+| `classList.add(classe)`           | adiciona a classe                                      |
+| `classList.remove(classe)`        | remove a classe                                        |
+| `classList.toggle(classe)`        | adiciona, se não existir; remove, se existir           |
+| `classList.toggle(classe, cond)`  | adiciona, se `cond` for `true`; remove, se for `false` |
+| `classList.contains(classe)`      | verifica se o elemento tem a classe                    |
+| `classList.replace(antiga, nova)` | troca uma classe por outra                             |
+
+```js
+item.classList.add("aprovado");
+item.classList.remove("reprovado");
+item.classList.toggle("destaque"); // liga e desliga a cada chamada
+item.classList.toggle("reprovado", media < 7); // depende da condição
+item.classList.contains("aprovado"); // true
+```
+
+> A propriedade `className` também existe, mas ela substitui **todas** as classes do elemento de uma vez. Para adicionar ou remover uma classe específica, use `classList`.
+
+### Estilos
+
+A propriedade **`style`** altera o CSS de um elemento diretamente. Os nomes das propriedades CSS são escritos em **camelCase**, e os valores são **strings**, com a unidade de medida:
+
+```js
+titulo.style.color = "darkblue";
+titulo.style.backgroundColor = "lightyellow"; // background-color no CSS
+titulo.style.fontSize = "32px"; // font-size no CSS
+```
+
+> **Boa prática:** prefira definir os estilos no arquivo CSS, em uma classe, e usar o JavaScript apenas para **adicionar ou remover essa classe**. Assim, a aparência fica no CSS, o comportamento fica no JavaScript, e os dois ficam mais fáceis de manter.
+
+```css
+.reprovado {
+  color: crimson;
+  font-weight: bold;
+}
+```
+
+```js
+item.classList.add("reprovado"); // em vez de alterar cada estilo com style
+```
+
+### Criando, inserindo e removendo elementos
+
+Um novo elemento é criado com **`document.createElement`**, mas ele só aparece na página depois de ser **inserido** no DOM:
+
+```js
+const aviso = document.createElement("p"); // cria um <p>, ainda fora da página
+aviso.textContent = "As notas foram atualizadas.";
+aviso.classList.add("aviso");
+
+document.body.append(aviso); // insere no final do <body>: agora ele aparece
+```
+
+| Método                          | O que faz                                     |
+| ------------------------------- | --------------------------------------------- |
+| `pai.append(...novos)`          | insere dentro de `pai`, no **final**          |
+| `pai.prepend(...novos)`         | insere dentro de `pai`, no **início**         |
+| `referencia.before(...novos)`   | insere **antes** de `referencia`, como irmão  |
+| `referencia.after(...novos)`    | insere **depois** de `referencia`, como irmão |
+| `pai.replaceChildren(...novos)` | substitui **todo o conteúdo** de `pai`        |
+| `elemento.remove()`             | remove o próprio elemento da página           |
+
+Esses métodos aceitam vários elementos de uma vez, e também textos: `paragrafo.append("Média: ", destaque)`. Chamado sem argumentos, o `replaceChildren()` esvazia o elemento.
+
+> Um elemento só pode estar em **um lugar** do DOM. Inserir um elemento que já está na página **move** esse elemento, em vez de copiá-lo.
+
+> Em códigos mais antigos, aparece o `appendChild`, que funciona como o `append`, mas aceita apenas um elemento por vez.
+
+Combinando esses métodos com arrays e laços ([tópico 11](#11-arrays)), é possível montar uma lista inteira a partir dos dados:
+
+```js
+const alunos = [
+  { nome: "Ana", media: 8.5 },
+  { nome: "Bruno", media: 6 },
+  { nome: "Carla", media: 9.2 },
+];
+
+const listaDeAlunos = document.createElement("ul");
+
+for (const aluno of alunos) {
+  const item = document.createElement("li");
+  item.textContent = `${aluno.nome}: ${aluno.media.toFixed(1)}`;
+  item.classList.toggle("reprovado", aluno.media < 7);
+  listaDeAlunos.append(item);
+}
+
+document.body.append(listaDeAlunos);
+```
+
+### Resumo
+
+| Tarefa                       | Como fazer                                               |
+| ---------------------------- | -------------------------------------------------------- |
+| alterar o texto              | `elemento.textContent = "..."`                           |
+| alterar um atributo          | `elemento.href = "..."` ou `setAttribute("href", "...")` |
+| adicionar ou remover classes | `classList.add`, `remove` e `toggle`                     |
+| esconder um elemento         | `elemento.hidden = true`                                 |
+| criar um elemento            | `document.createElement("tag")`                          |
+| inserir na página            | `append`, `prepend`, `before` e `after`                  |
+| remover da página            | `elemento.remove()`                                      |
+
+### Experimente no console
+
+Com o `index.html` aberto, digite no console:
+
+```js
+document.title = "Estudando o DOM"; // o texto da aba muda
+console.dir(document.body.firstElementChild); // o <header> da página, como objeto
+
+const aviso = document.createElement("p");
+aviso.textContent = "Este parágrafo foi criado pelo JavaScript!";
+aviso.style.padding = "16px";
+aviso.style.backgroundColor = "gold";
+document.body.prepend(aviso); // aparece no topo da página
+
+aviso.remove(); // e desaparece
+```
+
+---
+
+## 13. Seletores de elementos
+
+No tópico anterior, os elementos foram criados pelo próprio JavaScript, então já havia uma variável apontando para cada um. Mas a maior parte dos elementos de uma página já está escrita no HTML. Para alterá-los, primeiro é preciso **encontrá-los** no DOM, e os métodos que fazem isso usam **seletores**.
+
+O resultado da busca é uma **referência** ao elemento ([tópico 10](#10-objetos)): alterar o elemento por meio da variável altera o próprio elemento na página.
+
+### Revisão: seletores CSS
+
+O JavaScript usa os mesmos seletores do CSS:
+
+| Seletor              | Seleciona                                         | Exemplo               |
+| -------------------- | ------------------------------------------------- | --------------------- |
+| `tag`                | os elementos com aquela tag                       | `li`                  |
+| `.classe`            | os elementos com a classe                         | `.aprovado`           |
+| `#id`                | o elemento com o id                               | `#lista-de-alunos`    |
+| `[atributo]`         | os elementos que têm o atributo                   | `[data-matricula]`    |
+| `[atributo="valor"]` | os elementos com o atributo igual ao valor        | `[type="email"]`      |
+| `a b`                | `b` em qualquer nível dentro de `a` (descendente) | `#lista-de-alunos li` |
+| `a > b`              | `b` diretamente dentro de `a` (filho)             | `ul > li`             |
+| `a, b`               | os elementos que correspondem a `a` **ou** a `b`  | `h1, h2`              |
+| `tag.classe`         | os elementos com a tag **e** a classe             | `li.aprovado`         |
+| `:first-child`       | os elementos que são o primeiro filho do seu pai  | `li:first-child`      |
+| `:checked`           | as caixas de seleção e opções marcadas            | `input:checked`       |
+| `:not(seletor)`      | os elementos que **não** correspondem ao seletor  | `li:not(.aprovado)`   |
+
+> Cuidado com os espaços: `li.aprovado` é um `li` que tem a classe `aprovado`, enquanto `li .aprovado` é um elemento com a classe `aprovado` **dentro** de um `li`.
+
+### `getElementById`
+
+Busca um elemento pelo seu `id`. Como o `id` deve ser único na página, o resultado é **um único elemento**, ou `null`, se nenhum for encontrado.
+
+```js
+const listaDeAlunos = document.getElementById("lista-de-alunos"); // sem o #
+```
+
+### `querySelector`
+
+Recebe **qualquer seletor CSS** e retorna o **primeiro** elemento que corresponde a ele, ou `null`, se nenhum for encontrado:
+
+```js
+const titulo = document.querySelector("h1");
+const listaDeAlunos = document.querySelector("#lista-de-alunos"); // com o #
+const primeiroAprovado = document.querySelector("li.aprovado");
+const campoEmail = document.querySelector('input[type="email"]');
+```
+
+### `querySelectorAll`
+
+Retorna **todos** os elementos que correspondem ao seletor, em uma **`NodeList`**. Se nenhum for encontrado, a lista fica vazia (`length` igual a `0`); o resultado nunca é `null`.
+
+```js
+const itens = document.querySelectorAll("#lista-de-alunos li");
+
+itens.length; // quantidade de itens encontrados
+itens[0]; // o primeiro item
+
+itens.forEach((item) => {
+  item.classList.add("destaque");
+});
+
+for (const item of itens) {
+  console.log(item.textContent);
+}
+```
+
+A `NodeList` se parece com um array, mas **não é um array**: ela tem `length`, índices e `forEach`, mas não tem `map`, `filter` nem `reduce`. Para usar esses métodos, converta a lista em um array com o spread ([tópico 11](#11-arrays)) ou com `Array.from`:
+
+```js
+const nomes = [...itens].map((item) => item.textContent);
+const aprovados = Array.from(itens).filter((item) =>
+  item.classList.contains("aprovado"),
+);
+```
+
+### `getElementsByClassName` e `getElementsByTagName`
+
+São métodos mais antigos, que buscam pelo nome de uma classe (sem o `.`) ou de uma tag. Eles retornam uma **`HTMLCollection`**, que também se parece com um array, mas **não tem `forEach`** (o `for...of` funciona normalmente).
+
+```js
+const aprovados = document.getElementsByClassName("aprovado"); // sem o .
+const paragrafos = document.getElementsByTagName("p");
+```
+
+### Coleções estáticas e vivas
+
+- A `NodeList` do `querySelectorAll` é **estática**: ela é uma "foto" do momento da busca. Elementos adicionados depois não aparecem nela.
+- A `HTMLCollection` é **viva**: ela se atualiza sozinha quando o DOM muda.
+
+```js
+// suponha uma lista com 3 itens
+const itensEstaticos = document.querySelectorAll("li");
+const itensVivos = document.getElementsByTagName("li");
+
+const novoItem = document.createElement("li");
+document.querySelector("ul").append(novoItem);
+
+itensEstaticos.length; // 3 (não mudou)
+itensVivos.length; // 4 (atualizou sozinha)
+```
+
+### Comparativo
+
+| Método                   | Recebe               | Retorna                        | Se não encontrar |
+| ------------------------ | -------------------- | ------------------------------ | ---------------- |
+| `getElementById`         | o id, sem `#`        | um elemento                    | `null`           |
+| `querySelector`          | qualquer seletor CSS | o primeiro elemento encontrado | `null`           |
+| `querySelectorAll`       | qualquer seletor CSS | uma `NodeList` estática        | lista vazia      |
+| `getElementsByClassName` | a classe, sem `.`    | uma `HTMLCollection` viva      | coleção vazia    |
+| `getElementsByTagName`   | o nome da tag        | uma `HTMLCollection` viva      | coleção vazia    |
+
+> **Boa prática:** no dia a dia, use `querySelector` e `querySelectorAll`. Eles aceitam qualquer seletor CSS e deixam o código uniforme. O `getElementById` continua sendo uma boa opção para buscar um elemento pelo id.
+
+### Buscando dentro de um elemento
+
+O `querySelector` e o `querySelectorAll` existem em **todos os elementos**, e não só no `document`. Nesse caso, a busca acontece apenas **dentro** daquele elemento:
+
+```js
+const formulario = document.querySelector("#formulario-de-cadastro");
+const campos = formulario.querySelectorAll("input"); // só os campos deste formulário
+const botaoEnviar = formulario.querySelector("button");
+```
+
+Isso deixa a busca mais precisa e evita encontrar, sem querer, elementos parecidos em outras partes da página.
+
+### `closest` e `matches`
+
+- **`elemento.closest(seletor)`** procura **para cima** na árvore: começa pelo próprio elemento e sobe pelos ancestrais até encontrar um que corresponda ao seletor. Se não encontrar, retorna `null`.
+- **`elemento.matches(seletor)`** verifica se o próprio elemento corresponde ao seletor e retorna `true` ou `false`.
+
+```html
+<li class="aluno" data-matricula="2025001">
+  <span>Ana</span>
+  <button class="botao-remover">Remover</button>
+</li>
+```
+
+```js
+const botaoRemover = document.querySelector(".botao-remover");
+
+botaoRemover.closest(".aluno"); // o <li> que contém o botão
+botaoRemover.closest(".aluno").dataset.matricula; // "2025001"
+botaoRemover.matches("button"); // true
+botaoRemover.matches(".aluno"); // false
+```
+
+O `closest` é muito usado com eventos, como será visto no [tópico 14](#14-eventos).
+
+### Quando o elemento não é encontrado
+
+Se nada for encontrado, o `querySelector` e o `getElementById` retornam `null`. Tentar usar esse `null` como se fosse um elemento gera um dos erros mais comuns do JavaScript no navegador:
+
+```js
+const titulo = document.querySelector("#titulo-principal"); // não existe na página
+titulo.textContent = "Olá"; // TypeError: Cannot set properties of null (setting 'textContent')
+```
+
+As causas mais frequentes são:
+
+- um erro de digitação no seletor (`#lista-alunos` em vez de `#lista-de-alunos`);
+- esquecer o `#` ou o `.` no `querySelector`, ou colocá-los no `getElementById`;
+- executar o script **antes** de o elemento existir (veja [onde colocar a tag `<script>`](#onde-colocar-a-tag-script)).
+
+Quando um elemento pode não existir, verifique antes de usá-lo:
+
+```js
+const mensagem = document.querySelector(".mensagem");
+
+if (mensagem) {
+  mensagem.textContent = "Cadastro realizado!";
+}
+
+// para apenas ler um valor, o encadeamento opcional (tópico 10) também resolve
+const textoDaMensagem = mensagem?.textContent ?? "";
+```
+
+> O encadeamento opcional serve apenas para **ler**: `mensagem?.textContent = "..."` gera um erro de sintaxe.
+
+### Boas práticas
+
+- **Busque uma vez e guarde o resultado em uma constante**, no início do código, em vez de repetir a mesma busca várias vezes.
+- **Use nomes que indiquem o tipo do elemento:** `botaoEnviar`, `campoEmail`, `listaDeAlunos`, `mensagemDeErro`.
+- **Use `id` para elementos únicos e classes para grupos de elementos.**
+- No HTML, ids e classes costumam usar letras minúsculas separadas por hífen (`lista-de-alunos`). No JavaScript, a variável correspondente segue o camelCase (`listaDeAlunos`), como visto em [Convenções de nomenclatura](#convenções-de-nomenclatura).
+
+### Experimente no console
+
+Com o `index.html` aberto:
+
+```js
+document.querySelector("h1").textContent; // "Introdução ao JavaScript"
+document.getElementById("loops"); // a seção do tópico de laços de repetição
+document.querySelectorAll(".topico").length; // 11: uma seção para cada tópico
+
+// contorna de vermelho todos os botões "Executar" da página
+document.querySelectorAll(".botao--principal").forEach((botao) => {
+  botao.style.outline = "3px solid red";
+});
+```
+
+---
+
+## 14. Eventos
+
+Um **evento** é algo que acontece na página: um clique, uma tecla pressionada, um texto digitado, o envio de um formulário, o fim do carregamento. O JavaScript pode **escutar** esses eventos e executar uma função sempre que eles acontecerem.
+
+Até aqui, o código era executado de cima para baixo, uma única vez. Com eventos, parte do código fica **esperando**: a função só é executada quando o evento acontece, e pode ser executada muitas vezes.
+
+### `addEventListener`
+
+O método **`addEventListener`** registra uma função para ser executada quando um evento acontecer em um elemento. Essa função é chamada de **ouvinte** (_listener_) ou **manipulador** (_handler_) do evento, e é um exemplo de callback ([tópico 9](#9-funções-e-arrow-functions)).
+
+```html
+<button id="botao-saudar">Saudar</button>
+```
+
+```js
+const botaoSaudar = document.querySelector("#botao-saudar");
+
+function exibirSaudacao() {
+  console.log("Olá, turma!");
+}
+
+// elemento.addEventListener(tipoDoEvento, funcaoOuvinte);
+botaoSaudar.addEventListener("click", exibirSaudacao);
+```
+
+Também é comum escrever a função diretamente na chamada, como arrow function:
+
+```js
+botaoSaudar.addEventListener("click", () => {
+  console.log("Olá, turma!");
+});
+```
+
+> **Erro comum:** escrever `addEventListener("click", exibirSaudacao())`, com parênteses. Assim, a função é **executada imediatamente**, e o que fica registrado como ouvinte é o seu retorno (`undefined`). Passe a função **sem parênteses**: quem vai chamá-la é o navegador, quando o evento acontecer.
+
+Um mesmo elemento pode ter vários ouvintes, inclusive para o mesmo evento. Todos são executados, na ordem em que foram registrados.
+
+### Principais eventos
+
+| Categoria  | Evento             | Quando acontece                                        |
+| ---------- | ------------------ | ------------------------------------------------------ |
+| mouse      | `click`            | o elemento é clicado                                   |
+| mouse      | `dblclick`         | o elemento recebe um clique duplo                      |
+| mouse      | `mouseenter`       | o ponteiro do mouse entra no elemento                  |
+| mouse      | `mouseleave`       | o ponteiro do mouse sai do elemento                    |
+| teclado    | `keydown`          | uma tecla é pressionada                                |
+| teclado    | `keyup`            | uma tecla é solta                                      |
+| formulário | `input`            | o valor de um campo muda (a cada caractere digitado)   |
+| formulário | `change`           | o valor de um campo é confirmado                       |
+| formulário | `submit`           | um formulário é enviado                                |
+| formulário | `focus`            | o elemento recebe o foco (o cursor entra no campo)     |
+| formulário | `blur`             | o elemento perde o foco                                |
+| página     | `DOMContentLoaded` | o HTML foi lido e o DOM está pronto (no `document`)    |
+| página     | `load`             | tudo foi carregado, inclusive as imagens (no `window`) |
+
+A diferença entre `input` e `change`: o `input` acontece a cada alteração, enquanto o `change` acontece quando a alteração é concluída, por exemplo, ao sair de um campo de texto ou ao escolher uma opção em uma lista de seleção.
+
+### O objeto do evento
+
+Quando o evento acontece, o navegador chama a função ouvinte e envia a ela um **objeto com informações sobre o evento**. Para usá-lo, basta declarar um parâmetro, normalmente chamado de `evento` (em códigos em inglês, `event` ou apenas `e`):
+
+```js
+botaoSaudar.addEventListener("click", (evento) => {
+  console.log(evento.type); // "click"
+  console.log(evento.target); // o elemento clicado
+});
+```
+
+| Propriedade ou método      | O que contém ou faz                          |
+| -------------------------- | -------------------------------------------- |
+| `evento.type`              | o tipo do evento (`"click"`, `"keydown"`...) |
+| `evento.target`            | o elemento em que o evento **começou**       |
+| `evento.currentTarget`     | o elemento que tem o ouvinte                 |
+| `evento.key`               | a tecla pressionada (`"a"`, `"Enter"`...)    |
+| `evento.preventDefault()`  | cancela o comportamento padrão do navegador  |
+| `evento.stopPropagation()` | interrompe a propagação do evento            |
+
+### Eventos de teclado
+
+O `evento.key` informa qual tecla foi pressionada. Por exemplo, para fazer uma busca ao pressionar `Enter`:
+
+```js
+const campoDeBusca = document.querySelector("#campo-de-busca");
+
+campoDeBusca.addEventListener("keydown", (evento) => {
+  if (evento.key === "Enter") {
+    console.log(`Buscando por: ${campoDeBusca.value}`);
+  }
+});
+```
+
+### Campos de formulário
+
+O valor de um campo fica na propriedade `value` e é **sempre uma string**, mesmo quando o usuário digita um número. Por isso, valem as conversões do [tópico 2](#2-tipos-primitivos) e os cuidados com textos do [tópico 3](#3-manipulação-de-strings).
+
+O evento `input` permite reagir **enquanto** o usuário digita. Um uso comum é filtrar uma lista:
+
+```html
+<input type="text" id="campo-de-busca" placeholder="Buscar aluno" />
+
+<ul id="lista-de-alunos">
+  <li>Ana Souza</li>
+  <li>Bruno Lima</li>
+  <li>Carla Dias</li>
+</ul>
+```
+
+```js
+const campoDeBusca = document.querySelector("#campo-de-busca");
+const itensDaLista = document.querySelectorAll("#lista-de-alunos li");
+
+campoDeBusca.addEventListener("input", () => {
+  const termoBuscado = campoDeBusca.value.trim().toLowerCase();
+
+  for (const item of itensDaLista) {
+    const nomeDoAluno = item.textContent.toLowerCase();
+    item.hidden = !nomeDoAluno.includes(termoBuscado);
+  }
+});
+```
+
+### `preventDefault` e o envio de formulários
+
+Alguns eventos têm um **comportamento padrão** no navegador: clicar em um link abre outra página, e enviar um formulário **recarrega a página**, apagando tudo o que o JavaScript fez nela. O método `evento.preventDefault()` cancela esse comportamento:
+
+```html
+<form id="formulario-de-nota">
+  <input type="text" id="campo-nome" placeholder="Nome do aluno" />
+  <input type="text" id="campo-nota" placeholder="Nota" />
+  <button type="submit">Adicionar</button>
+</form>
+
+<p id="mensagem"></p>
+<ul id="lista-de-notas"></ul>
+```
+
+```js
+const formulario = document.querySelector("#formulario-de-nota");
+const campoNome = document.querySelector("#campo-nome");
+const campoNota = document.querySelector("#campo-nota");
+const mensagem = document.querySelector("#mensagem");
+const listaDeNotas = document.querySelector("#lista-de-notas");
+
+formulario.addEventListener("submit", (evento) => {
+  evento.preventDefault(); // impede o recarregamento da página
+
+  const nome = campoNome.value.trim();
+  const notaDigitada = campoNota.value.trim().replace(",", ".");
+  const nota = Number(notaDigitada);
+
+  const temNome = nome !== "";
+  const ehNotaValida = notaDigitada !== "" && nota >= 0 && nota <= 10;
+
+  if (!temNome || !ehNotaValida) {
+    mensagem.textContent = "Informe o nome e uma nota de 0 a 10.";
+    return;
+  }
+
+  const item = document.createElement("li");
+  item.textContent = `${nome}: ${nota.toFixed(1)}`;
+  listaDeNotas.append(item);
+
+  mensagem.textContent = "";
+  formulario.reset(); // limpa os campos do formulário
+  campoNome.focus(); // coloca o cursor de volta no primeiro campo
+});
+```
+
+O exemplo reúne vários conteúdos da Parte 1:
+
+- `trim` e `replace` padronizam o texto digitado e aceitam a nota com vírgula (tópicos 2 e 3);
+- a verificação `notaDigitada !== ""` é necessária porque `Number("")` resulta em `0`, e não em `NaN` (tópico 2);
+- se a nota digitada não for um número, `nota` vale `NaN`, e as comparações `nota >= 0` e `nota <= 10` resultam em `false` (tópico 5);
+- o `return` encerra a função antes de o item ser adicionado (tópico 9).
+
+> Ouça o evento `submit` no **formulário**, e não o `click` no botão. Assim, o envio também funciona quando o usuário pressiona `Enter` dentro de um campo.
+
+### Propagação de eventos
+
+A maioria dos eventos, depois de acontecer em um elemento, **sobe pela árvore do DOM**: passa pelo pai, pelo pai do pai e assim por diante, até chegar ao `document`. Esse comportamento é chamado de **propagação** (em inglês, _bubbling_, ou borbulhamento).
+
+```
+document                 ▲  ...até chegar ao document
+└── body                 │
+    └── ul               │  sobe pelos ancestrais...
+        └── li           │
+            └── button   │  o clique acontece aqui
+```
+
+Por isso, um ouvinte registrado em um elemento pai também é executado quando o evento acontece em um de seus filhos. Nesse caso, o `evento.target` indica onde o evento começou (o `button`), e o `evento.currentTarget`, o elemento que tem o ouvinte (por exemplo, o `ul`).
+
+O `evento.stopPropagation()` interrompe a propagação, mas deve ser usado com moderação, pois outros códigos da página podem depender dela.
+
+### Delegação de eventos
+
+A propagação permite uma técnica muito útil: em vez de registrar um ouvinte em **cada** item de uma lista, registra-se **um único ouvinte no elemento pai**, e o `evento.target` indica onde foi o clique. Essa técnica é chamada de **delegação de eventos**.
+
+```html
+<ul id="lista-de-alunos">
+  <li>Ana Souza <button class="botao-remover">Remover</button></li>
+  <li>Bruno Lima <button class="botao-remover">Remover</button></li>
+</ul>
+```
+
+```js
+const listaDeAlunos = document.querySelector("#lista-de-alunos");
+
+listaDeAlunos.addEventListener("click", (evento) => {
+  const botaoRemover = evento.target.closest(".botao-remover");
+
+  if (botaoRemover) {
+    botaoRemover.closest("li").remove();
+  }
+});
+```
+
+O `closest` ([tópico 13](#13-seletores-de-elementos)) garante que o código funcione mesmo se o clique acontecer em algo **dentro** do botão, como um ícone. Se o clique for em outra parte da lista, `botaoRemover` é `null`, e o `if` ignora o clique.
+
+Vantagens da delegação:
+
+- **um único ouvinte**, em vez de um para cada item;
+- **funciona com elementos criados depois**, com `createElement` ([tópico 12](#12-dom)), sem precisar registrar novos ouvintes.
+
+### Removendo um ouvinte
+
+O `removeEventListener` remove um ouvinte, mas precisa receber **a mesma função** que foi registrada. Por isso, ele não funciona com funções escritas diretamente na chamada:
+
+```js
+botaoSaudar.addEventListener("click", exibirSaudacao);
+botaoSaudar.removeEventListener("click", exibirSaudacao); // remove
+
+botaoSaudar.addEventListener("click", () => console.log("Olá!"));
+// não remove: a arrow function abaixo é uma nova função, diferente da anterior
+botaoSaudar.removeEventListener("click", () => console.log("Olá!"));
+```
+
+Para um ouvinte que deve ser executado **uma única vez**, use a opção `{ once: true }`. Ele é removido automaticamente depois da primeira execução:
+
+```js
+botaoConfirmar.addEventListener("click", confirmarMatricula, { once: true });
+```
+
+### Outras formas de registrar eventos
+
+Em códigos antigos, é comum encontrar duas outras formas:
+
+```html
+<!-- 1. Atributo "on" + nome do evento, no HTML -->
+<button onclick="exibirSaudacao()">Saudar</button>
+```
+
+```js
+// 2. Propriedade "on" + nome do evento, no JavaScript
+botaoSaudar.onclick = exibirSaudacao;
+```
+
+As duas funcionam, mas têm desvantagens: a propriedade aceita **apenas uma função por evento** (uma nova atribuição substitui a anterior), e o atributo mistura JavaScript com HTML.
+
+> **Boa prática:** use sempre `addEventListener`. Ele permite vários ouvintes para o mesmo evento e mantém o JavaScript separado do HTML.
+
+> Dentro de um ouvinte criado com `function`, `this` representa o elemento que tem o ouvinte (o mesmo que `evento.currentTarget`). Em uma arrow function, isso não acontece, porque ela não tem `this` próprio ([tópico 9](#9-funções-e-arrow-functions)). Para evitar confusão, prefira usar `evento.currentTarget` ou a variável do elemento.
+
+### Esperando o DOM ficar pronto
+
+Se o script estiver no `<head>` sem o atributo `defer`, ele será executado antes de os elementos existirem. Nesse caso, o código pode ficar dentro de um ouvinte do evento **`DOMContentLoaded`**, que acontece assim que o HTML termina de ser lido:
+
+```js
+document.addEventListener("DOMContentLoaded", () => {
+  const titulo = document.querySelector("h1"); // aqui o <h1> já existe
+  titulo.textContent = "Página pronta!";
+});
+```
+
+Em projetos novos, as formas vistas no [tópico 12](#onde-colocar-a-tag-script) (o script no final do `<body>` ou com `defer`) são mais simples.
+
+### Resumo
+
+| Tarefa                                    | Como fazer                                   |
+| ----------------------------------------- | -------------------------------------------- |
+| reagir a um evento                        | `elemento.addEventListener("tipo", funcao)`  |
+| saber onde o evento começou               | `evento.target`                              |
+| ler o valor de um campo                   | `campo.value` (sempre uma string)            |
+| impedir o recarregamento de um formulário | `evento.preventDefault()` no evento `submit` |
+| tratar vários itens com um único ouvinte  | delegação: ouvinte no pai + `closest`        |
+| executar o ouvinte uma única vez          | opção `{ once: true }`                       |
+| remover um ouvinte                        | `removeEventListener`, com a mesma função    |
+
+### Experimente no console
+
+Com o `index.html` aberto:
+
+```js
+// 1. Execute estas linhas e depois clique no título da página
+const titulo = document.querySelector("h1");
+titulo.addEventListener("click", () => {
+  titulo.textContent = titulo.textContent.toUpperCase();
+});
+
+// 2. Execute, clique em qualquer parte da página e pressione algumas teclas
+document.addEventListener("keydown", (evento) => {
+  console.log(`Tecla pressionada: ${evento.key}`);
+});
+
+// 3. O método click() simula um clique: o primeiro exemplo da página é executado
+document.querySelector(".botao--principal").click();
+```
+
+---
+
+## Estudo de caso: o `pagina.js`
+
+Com os três tópicos desta parte, já é possível ler o `pagina.js`, o arquivo que monta a página deste material. Ele é um exemplo real de uso do DOM: o `index.html` tem apenas a estrutura básica (cabeçalho, sumário vazio e área de conteúdo vazia), e **todo o resto é criado pelo JavaScript**, a partir da lista `topicos` do `script.js`.
+
+- **`criarElemento`** cria um elemento com classe e texto opcionais, usando `createElement`, `className` e `textContent` (tópico 12).
+- **`criarCartaoDeExemplo`** monta o cartão de cada exemplo. Usa `classList.add` para destacar as aplicações práticas, `append` para juntar as partes, `hidden` para esconder a saída até a primeira execução e `addEventListener("click", ...)` no botão **Executar** (tópicos 12 e 14). A cada execução, `replaceChildren` troca as linhas de saída anteriores pelas novas.
+- **`criarSecaoDoTopico`** e **`criarItemDoSumario`** montam a seção de cada tópico e o link do sumário, definindo propriedades como `id` e `href` (tópico 12). O botão **Executar todos** também recebe um ouvinte de `click` (tópico 14).
+- **`montarPagina`** encontra os elementos `#lista-do-sumario` e `#conteudo` com `getElementById` e insere neles tudo o que foi criado (tópicos 12 e 13).
+- **`destacarSintaxe`** e **`destacarTopicoVisivel`** usam `querySelectorAll` com `forEach` para percorrer os blocos de código e os links do sumário, e `classList.toggle(classe, condicao)` para destacar o link do tópico visível (tópicos 12 e 13).
+
+Alguns detalhes que valem a observação:
+
+- **Todo texto é inserido com `textContent`**, nunca com `innerHTML`. Assim, o código dos exemplos, que contém caracteres como `<` e `>`, aparece exatamente como foi escrito, sem ser interpretado como HTML.
+- **Os elementos são montados por completo antes de entrar na página:** cada cartão e cada seção são criados e preenchidos, e só no final a função `montarPagina` os insere no DOM.
+- **A ordem dos scripts no `index.html` importa:** o `script.js` vem antes do `pagina.js`, porque o `pagina.js` usa a lista `topicos`, definida no `script.js`. E os dois ficam no final do `<body>`, para que `#lista-do-sumario` e `#conteudo` já existam quando o `pagina.js` for executado (tópico 12).
+
+> O `pagina.js` também usa dois recursos que vão além deste material: o `IntersectionObserver`, que detecta quais seções estão visíveis na tela, e a substituição temporária do `console.log`, que captura a saída dos exemplos para exibi-la na página.
+
+---
+
 ## Referências
 
 - [Guia de JavaScript — MDN Web Docs (em português)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Guide)
 - [Referência de JavaScript — MDN Web Docs (em português)](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference)
 - [JavaScript.info — tutorial moderno de JavaScript (em português)](https://pt.javascript.info/)
+- [Introdução ao DOM — MDN Web Docs (em português)](https://developer.mozilla.org/pt-BR/docs/Web/API/Document_Object_Model/Introduction)
+- [`querySelector` — MDN Web Docs (em português)](https://developer.mozilla.org/pt-BR/docs/Web/API/Document/querySelector)
+- [`addEventListener` — MDN Web Docs (em português)](https://developer.mozilla.org/pt-BR/docs/Web/API/EventTarget/addEventListener)

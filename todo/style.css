@@ -1,0 +1,309 @@
+/* ==========================================================================
+   LISTA DE TAREFAS — ESTILOS
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   Variáveis de tema (as mesmas cores do material principal)
+   -------------------------------------------------------------------------- */
+
+:root {
+    --cor-fundo: #f5f6f8;
+    --cor-superficie: #ffffff;
+    --cor-superficie-suave: #f0f2f5;
+    --cor-borda: #e1e4e9;
+    --cor-texto: #1c1f24;
+    --cor-texto-suave: #5a6270;
+    --cor-destaque: #f7df1e; /* amarelo do JavaScript */
+    --cor-destaque-forte: #e8cf00;
+    --cor-destaque-texto: #1c1f24;
+    --cor-foco: #2557c7;
+    --cor-erro: #c62828;
+
+    --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    --raio: 10px;
+    --sombra: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 12px rgb(0 0 0 / 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --cor-fundo: #0f1115;
+        --cor-superficie: #171a20;
+        --cor-superficie-suave: #1d2128;
+        --cor-borda: #2a2f38;
+        --cor-texto: #e7e9ee;
+        --cor-texto-suave: #9aa3b2;
+        --cor-foco: #8ab4ff;
+        --cor-erro: #ff8a80;
+        --sombra: none;
+    }
+}
+
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Garante que o atributo hidden esconda o elemento, mesmo com display: flex */
+[hidden] {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+    padding: 48px 16px;
+    font-family: var(--fonte-texto);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--cor-texto);
+    background: var(--cor-fundo);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Esconde o elemento da tela, mas o mantém disponível para leitores de tela */
+.visualmente-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    border: 0;
+    white-space: nowrap;
+}
+
+
+/* --------------------------------------------------------------------------
+   Cartão do app
+   -------------------------------------------------------------------------- */
+
+.app {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    border: 1px solid var(--cor-borda);
+    border-top: 4px solid var(--cor-destaque);
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.app__titulo {
+    margin: 0;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.app__descricao {
+    margin: 6px 0 0;
+    color: var(--cor-texto-suave);
+    font-size: 0.9375rem;
+}
+
+
+/* --------------------------------------------------------------------------
+   Formulário
+   -------------------------------------------------------------------------- */
+
+.formulario {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.formulario__campo {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    background: var(--cor-superficie-suave);
+    color: var(--cor-texto);
+    font: inherit;
+}
+
+.formulario__campo::placeholder {
+    color: var(--cor-texto-suave);
+}
+
+.formulario__campo:focus-visible {
+    outline: 2px solid var(--cor-foco);
+    outline-offset: 1px;
+}
+
+
+/* --------------------------------------------------------------------------
+   Botões
+   -------------------------------------------------------------------------- */
+
+.botao {
+    flex: none;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+.botao:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.botao:focus-visible {
+    outline: 2px solid var(--cor-foco);
+    outline-offset: 2px;
+}
+
+.botao:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.botao--principal {
+    border-color: var(--cor-destaque-forte);
+    background: var(--cor-destaque);
+    color: var(--cor-destaque-texto);
+}
+
+.botao--principal:hover {
+    background: var(--cor-destaque-forte);
+}
+
+.botao--secundario {
+    padding: 6px 12px;
+    border-color: var(--cor-borda);
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    font-size: 0.875rem;
+}
+
+.botao--secundario:hover:not(:disabled) {
+    background: var(--cor-superficie-suave);
+}
+
+
+/* --------------------------------------------------------------------------
+   Lista de tarefas
+   -------------------------------------------------------------------------- */
+
+.lista {
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tarefa {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.tarefa__rotulo {
+    display: flex;
+    flex: 1 1 auto;
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+    padding: 12px 0;
+    cursor: pointer;
+}
+
+.tarefa__caixa {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--cor-destaque-forte);
+    cursor: pointer;
+}
+
+.tarefa__caixa:focus-visible {
+    outline: 2px solid var(--cor-foco);
+    outline-offset: 2px;
+}
+
+.tarefa__texto {
+    overflow-wrap: anywhere;
+}
+
+.tarefa--concluida .tarefa__texto {
+    color: var(--cor-texto-suave);
+    text-decoration: line-through;
+}
+
+.tarefa__remover {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--cor-texto-suave);
+    font: inherit;
+    cursor: pointer;
+}
+
+.tarefa__remover:hover {
+    background: var(--cor-superficie-suave);
+    color: var(--cor-erro);
+}
+
+.tarefa__remover:focus-visible {
+    outline: 2px solid var(--cor-foco);
+    outline-offset: 1px;
+}
+
+
+/* --------------------------------------------------------------------------
+   Lista vazia e rodapé
+   -------------------------------------------------------------------------- */
+
+.lista-vazia {
+    margin: 24px 0 0;
+    padding: 24px 16px;
+    border: 1px dashed var(--cor-borda);
+    border-radius: 8px;
+    color: var(--cor-texto-suave);
+    text-align: center;
+}
+
+.rodape {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    color: var(--cor-texto-suave);
+    font-size: 0.875rem;
+}
+
+
+/* --------------------------------------------------------------------------
+   Telas menores
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+    body {
+        padding: 16px;
+    }
+
+    .app {
+        padding: 20px 16px;
+    }
+}

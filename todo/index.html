@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Lista de tarefas feita com HTML, CSS e JavaScript, com as tarefas salvas no localStorage.">
+    <title>Lista de tarefas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <main class="app">
+        <header>
+            <h1 class="app__titulo">Lista de tarefas</h1>
+            <p class="app__descricao">
+                As tarefas ficam salvas neste navegador e continuam aqui mesmo depois de fechar a página.
+            </p>
+        </header>
+
+        <form class="formulario" id="formulario-de-tarefa">
+            <label class="visualmente-oculto" for="campo-tarefa">Nova tarefa</label>
+            <input class="formulario__campo" type="text" id="campo-tarefa" placeholder="O que você precisa fazer?"
+                maxlength="200" autocomplete="off" required>
+            <button class="botao botao--principal" type="submit">Adicionar</button>
+        </form>
+
+        <ul class="lista" id="lista-de-tarefas"></ul>
+
+        <p class="lista-vazia" id="mensagem-lista-vazia" hidden>
+            Nenhuma tarefa por aqui. Que tal adicionar a primeira?
+        </p>
+
+        <footer class="rodape" id="rodape" hidden>
+            <span id="contador-de-pendentes" aria-live="polite"></span>
+            <button class="botao botao--secundario" type="button" id="botao-limpar-concluidas">
+                Limpar concluídas
+            </button>
+        </footer>
+
+        <noscript>
+            <p>Esta página precisa do JavaScript ativado no navegador para funcionar.</p>
+        </noscript>
+    </main>
+
+    <!-- No final do <body>, para que todos os elementos já existam quando o script for executado -->
+    <script src="app.js"></script>
+</body>
+
+</html>
