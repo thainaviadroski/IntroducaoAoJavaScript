@@ -1,0 +1,55 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #161616;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.consultar {
+    border: 1px solid #fff;
+    border-radius: 5px;
+    background-color: #fff;
+    padding: 20px;
+    width: 50%;
+}
+
+.consultar form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;    
+}
+
+.consultar input {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #000;
+}
+
+.consultar button {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #000;
+    color: #fff;
+    cursor: pointer;
+}
+
+#resultado {
+    display: none;
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;    
+}
+
+#resultado p {
+    margin-bottom: 5px;
+    font-size: 16px;
+}
